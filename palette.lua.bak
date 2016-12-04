@@ -1,0 +1,112 @@
+--показать цветовую гамму для шрифтов
+
+
+
+
+
+--пример из учебника по QLUA
+dofile (getScriptPath() .. "\\quik_table_wrapper.lua")
+--классы
+dofile (getScriptPath() .. "\\class.lua")
+dofile (getScriptPath() .. "\\table.lua")
+
+
+
+-- классы
+
+
+maintable={} --maintable.t - главная таблица робота
+
+
+
+is_run = true
+
+
+-- обработчики событий ----
+
+function OnInit(s)
+
+	maintable= MainTable()
+	maintable:Init()
+	--create and show table
+	maintable:createOwnTable("PALETTE")
+	maintable:showTable()
+	
+end
+
+function DestroyTables()
+	is_run = false
+	DestroyTable(maintable.t.t_id)
+end
+
+function OnStop(s)
+	DestroyTables()
+	is_run = false
+	return 1000
+end
+
+
+
+-- +----------------------------------------------------+
+--                  MAIN
+-- +----------------------------------------------------+
+
+-- функция обратного вызова для обработки событий в таблице. вызывается из main()
+--(или, другими словами, обработчик клика по таблице робота)
+--параметры:
+--  t_id - хэндл таблицы, полученный функцией AllocTable()
+--  msg - тип события, происшедшего в таблице
+--  par1 и par2 – значения параметров определяются типом сообщения msg, 
+--
+--функция должна располагаться перед main(), иначе - скрипт не останавливается при закрытии окна
+local f_cb = function( t_id,  msg,  par1, par2)
+  
+  if (msg==QTABLE_CLOSE)  then
+    is_run = false
+    DestroyTables()
+    
+  
+   elseif msg==QTABLE_VKEY then
+		--message(par2)
+		if par2 == 27 then
+			is_run=false
+			DestroyTables()
+		end
+	end  
+
+end 
+
+
+-- основная функция робота. здесь обновляется котировка и рассчитывается прибыль
+function main()
+
+  --установим обработчик событий таблицы робота
+  SetTableNotificationCallback (maintable.t.t_id, f_cb)
+  
+  
+	local row = nil
+	local row_text = 'СЪЕШЬ ЕЩЁ ЭТИХ МЯГКИХ ФРАНЦУЗСКИХ БУЛОК ДА ВЫПЕЙ ЧАЮ.!№;%:?*()_-=/'
+	local f_color     = RGB(230, 100, 100)
+	local b_color = RGB(27, 27, 27)         --background color for dark theme
+	
+	for i = 0, 255 do
+		for j = 0, 255 do
+			for k = 0, 255 do
+			
+				row = maintable.t:AddLine()
+				
+				maintable.t:SetValue(row, "test_row",  row_text)
+				
+				f_color     = RGB(i,j,k)
+				
+				SetColor(maintable.t.t_id, row, QTABLE_NO_INDEX, b_color, f_color, b_color, f_color)
+			end
+		end
+	end
+	
+  while is_run do  
+	
+    sleep(100)
+  end
+  
+end
